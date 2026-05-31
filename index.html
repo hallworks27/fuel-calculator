@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FuelFlow // Premium Fuel Mileage & Cost Calculator</title>
+  <meta name="description" content="Calculate vehicle fuel economy, trip costs, and track your history in US, UK, or Metric units.">
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="glass-bg"></div>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="brand">
+        <span class="icon">⚡</span>
+        <h1>FuelFlow</h1>
+      </div>
+      <p class="tagline">Smart Fuel Efficiency & Cost Analytics</p>
+      
+      <!-- Unit System Selector -->
+      <div class="unit-selector" role="radiogroup" aria-label="Unit System Selection">
+        <button type="button" class="unit-btn active" id="btn-us" data-unit="us" role="radio" aria-checked="true">US (mi, gal, $)</button>
+        <button type="button" class="unit-btn" id="btn-uk" data-unit="uk" role="radio" aria-checked="false">UK (mi, imp gal, £)</button>
+        <button type="button" class="unit-btn" id="btn-metric" data-unit="metric" role="radio" aria-checked="false">Metric (km, L, €/L)</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <!-- Calculator Form Section -->
+      <section class="card calculator-card">
+        <h2>Calculate Trip Efficiency</h2>
+        <form id="calculator-form" novalidate>
+          <div class="input-group">
+            <label for="distance">Distance Traveled (<span class="unit-dist-label">mi</span>)</label>
+            <input type="number" id="distance" required min="0.01" step="any" placeholder="e.g. 350">
+            <span class="error-msg" id="distance-error">Please enter a distance greater than 0.</span>
+          </div>
+
+          <div class="input-group">
+            <label for="fuel">Fuel Consumed (<span class="unit-fuel-label">gal</span>)</label>
+            <input type="number" id="fuel" required min="0.01" step="any" placeholder="e.g. 12">
+            <span class="error-msg" id="fuel-error">Please enter fuel volume greater than 0.</span>
+          </div>
+
+          <div class="input-group">
+            <label for="price">Fuel Price (per <span class="unit-price-label">gal</span>) - Optional</label>
+            <input type="number" id="price" min="0" step="any" placeholder="e.g. 3.45">
+            <span class="error-msg" id="price-error">Please enter a valid price.</span>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="btn-clear">Clear</button>
+            <button type="submit" class="btn btn-primary" id="btn-calculate">Calculate</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Results Display Section -->
+      <section class="card results-card" id="results-card">
+        <h2>Analysis</h2>
+        <div class="results-grid">
+          <div class="result-tile primary-tile">
+            <span class="tile-label">Fuel Economy</span>
+            <span class="tile-value" id="res-economy">-</span>
+            <span class="tile-unit" id="res-economy-unit">MPG</span>
+          </div>
+
+          <div class="result-tile">
+            <span class="tile-label">Total Trip Cost</span>
+            <span class="tile-value" id="res-cost">-</span>
+          </div>
+
+          <div class="result-tile">
+            <span class="tile-label">Cost per <span class="unit-dist-label">mi</span></span>
+            <span class="tile-value" id="res-cost-per-dist">-</span>
+          </div>
+        </div>
+        <button type="button" class="btn btn-accent full-width" id="btn-log-trip" disabled>Log Trip to History</button>
+      </section>
+
+      <!-- Stats Overview Section -->
+      <section class="card stats-card">
+        <h2>Lifetime Averages</h2>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <span class="stat-num" id="stat-avg-economy">-</span>
+            <span class="stat-desc">Avg Economy (<span class="economy-unit-label">MPG</span>)</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num" id="stat-total-distance">-</span>
+            <span class="stat-desc">Total Distance (<span class="unit-dist-label">mi</span>)</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num" id="stat-total-cost">-</span>
+            <span class="stat-desc">Total Spent</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- History Table Section -->
+      <section class="card history-card">
+        <div class="card-header-actions">
+          <h2>Trip History Log</h2>
+          <button type="button" class="btn btn-text-danger" id="btn-clear-history">Clear Log</button>
+        </div>
+        <div class="table-container">
+          <table class="history-table" id="history-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Distance</th>
+                <th>Fuel Used</th>
+                <th>Efficiency</th>
+                <th>Cost</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="history-tbody">
+              <!-- Dynamically populated -->
+              <tr class="empty-state">
+                <td colspan="6">No trips logged yet. Start calculating to fill history.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>&copy; 2026 FuelFlow. Built with vanilla HTML/CSS/JS. Locally cached.</p>
+    </footer>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
