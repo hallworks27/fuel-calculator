@@ -166,6 +166,7 @@ body {
   padding: 1.5rem;
   box-shadow: var(--shadow-glass);
   transition: background var(--transition-medium), border-color var(--transition-medium);
+  min-width: 0; /* Prevents flex/grid items from stretching parent container */
 }
 
 .card:hover {
@@ -420,10 +421,13 @@ body {
 }
 
 .table-container {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
   border-radius: 12px;
   border: 1px solid var(--border-glass);
   background: rgba(17, 24, 39, 0.3);
+  -webkit-overflow-scrolling: touch;
 }
 
 .history-table {
@@ -535,6 +539,33 @@ body {
 
   .btn {
     width: 100%;
+  }
+
+  /* Shrink table padding and font size for narrow screens (Pixel 7 Pro) */
+  .history-table th, 
+  .history-table td {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .result-tile {
+    padding: 0.85rem;
+  }
+
+  .tile-value {
+    font-size: 1.5rem;
+  }
+  
+  .stats-grid {
+    gap: 0.75rem;
+  }
+  
+  .stat-box {
+    padding: 1rem;
+  }
+  
+  .stat-num {
+    font-size: 1.4rem;
   }
 }
 
