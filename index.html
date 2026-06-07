@@ -30,6 +30,22 @@
       </div>
     </header>
 
+    <!-- Vehicle Selection & Management Panel -->
+    <section class="card vehicle-panel">
+      <div class="vehicle-selector-wrapper">
+        <label for="vehicle-select" class="panel-label">Active Vehicle:</label>
+        <div class="select-container">
+          <select id="vehicle-select" class="vehicle-select">
+            <!-- Dynamically populated -->
+          </select>
+        </div>
+        <div class="vehicle-actions">
+          <button type="button" class="btn-icon" id="btn-add-vehicle" title="Add New Vehicle" aria-label="Add Vehicle">＋</button>
+          <button type="button" class="btn-icon btn-icon-danger" id="btn-delete-vehicle" title="Delete Active Vehicle" aria-label="Delete Vehicle" disabled>－</button>
+        </div>
+      </div>
+    </section>
+
     <main class="app-main">
       <!-- Calculator Form Section -->
       <section class="card calculator-card">
@@ -113,6 +129,7 @@
             <thead>
               <tr>
                 <th>Date</th>
+                <th>Vehicle</th>
                 <th>Distance</th>
                 <th>Fuel Used</th>
                 <th>Efficiency</th>
@@ -123,7 +140,7 @@
             <tbody id="history-tbody">
               <!-- Dynamically populated -->
               <tr class="empty-state">
-                <td colspan="6">No trips logged yet. Start calculating to fill history.</td>
+                <td colspan="7">No trips logged yet. Start calculating to fill history.</td>
               </tr>
             </tbody>
           </table>

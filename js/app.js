@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // State
   let currentSystem = 'us'; // 'us', 'uk', or 'metric'
   let history = JSON.parse(localStorage.getItem('fuelflow_history')) || [];
+  let vehicles = JSON.parse(localStorage.getItem('fuelflow_vehicles')) || ['Primary Vehicle'];
+  let activeVehicle = localStorage.getItem('fuelflow_active_vehicle') || 'all';
   let currentCalculation = null;
 
   // DOM Elements
@@ -33,6 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const historyTbody = document.getElementById('history-tbody');
   const btnClearHistory = document.getElementById('btn-clear-history');
   const btnClear = document.getElementById('btn-clear');
+
+  // Vehicle Management DOM Elements
+  const vehicleSelect = document.getElementById('vehicle-select');
+  const btnAddVehicle = document.getElementById('btn-add-vehicle');
+  const btnDeleteVehicle = document.getElementById('btn-delete-vehicle');
 
   // Unit definitions & system metadata
   const systems = {
@@ -180,6 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
       totalCost,
       costPerDist,
       system: currentSystem,
+      vehicle: activeVehicle === 'all' ? vehicles[0] : activeVehicle,
       timestamp: Date.now()
     };
 
@@ -207,9 +215,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return currentCalculation;
   }
 
-  // Update Stats (Averages over entire log history)
+  // Update Stats (Averages over entire log history, filtered by vehicle)
   function updateStats() {
-    if (history.length === 0) {
+    const filteredHistory = activeVehicle === 'all' 
+      ? history 
+      : history.filter(item => item.vehicle === activeVehicle);
+
+    if (filteredHistory.length === 0) {
       statAvgEconomy.textContent = '-';
       statTotalDistance.textContent = '-';
       statTotalCost.textContent = '-';
@@ -221,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalFuelConverted = 0;
     let totalCostConverted = 0;
 
-    history.forEach(item => {
+    filteredHistory.forEach(item => {
       const dist = convertValue(item.distance, 'dist', item.system, currentSystem);
       const fuel = convertValue(item.fuel, 'fuel', item.system, currentSystem);
       const cost = item.price ? (fuel * convertValue(item.price, 'price', item.system, currentSystem)) : 0;
@@ -248,17 +260,21 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderHistory() {
     historyTbody.innerHTML = '';
     
-    if (history.length === 0) {
+    const filteredHistory = activeVehicle === 'all' 
+      ? history 
+      : history.filter(item => item.vehicle === activeVehicle);
+
+    if (filteredHistory.length === 0) {
       historyTbody.innerHTML = `
         <tr class="empty-state">
-          <td colspan="6">No trips logged yet. Start calculating to fill history.</td>
+          <td colspan="7">No trips logged yet for this vehicle. Start calculating to fill history.</td>
         </tr>
       `;
       return;
     }
 
     // Show newest first
-    const sortedHistory = [...history].sort((a, b) => b.timestamp - a.timestamp);
+    const sortedHistory = [...filteredHistory].sort((a, b) => b.timestamp - a.timestamp);
 
     sortedHistory.forEach(item => {
       const date = new Date(item.timestamp).toLocaleDateString(undefined, {
@@ -285,6 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${date}</td>
+        <td><span class="badge-vehicle">${item.vehicle || 'Primary Vehicle'}</span></td>
         <td>${distStr}</td>
         <td>${fuelStr}</td>
         <td style="font-weight: 500;">${econStr}</td>
@@ -337,6 +354,35 @@ document.addEventListener('DOMContentLoaded', () => {
     resCostPerDist.textContent = '-';
   }
 
+  // Render Vehicle Selector options
+  function renderVehicleOptions() {
+    vehicleSelect.innerHTML = '';
+    
+    // Fleet Option
+    const fleetOpt = document.createElement('option');
+    fleetOpt.value = 'all';
+    fleetOpt.textContent = 'All Vehicles (Fleet View)';
+    vehicleSelect.appendChild(fleetOpt);
+    
+    // Individual Vehicles
+    vehicles.forEach(veh => {
+      const opt = document.createElement('option');
+      opt.value = veh;
+      opt.textContent = veh;
+      vehicleSelect.appendChild(opt);
+    });
+
+    // Select Active Vehicle
+    vehicleSelect.value = activeVehicle;
+    
+    // Disable delete button if showing all or only one vehicle exists
+    if (activeVehicle === 'all' || vehicles.length <= 1) {
+      btnDeleteVehicle.setAttribute('disabled', 'true');
+    } else {
+      btnDeleteVehicle.removeAttribute('disabled');
+    }
+  }
+
   // Switch Unit System
   function setSystem(sysCode) {
     currentSystem = sysCode;
@@ -371,6 +417,68 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Vehicle selection change handler
+  vehicleSelect.addEventListener('change', (e) => {
+    activeVehicle = e.target.value;
+    localStorage.setItem('fuelflow_active_vehicle', activeVehicle);
+    renderVehicleOptions();
+    renderHistory();
+    updateStats();
+    
+    // If there is an active calculation, update its vehicle target
+    if (currentCalculation) {
+      currentCalculation.vehicle = activeVehicle === 'all' ? vehicles[0] : activeVehicle;
+    }
+  });
+
+  // Add Vehicle handler
+  btnAddVehicle.addEventListener('click', () => {
+    const name = prompt('Enter a name for the new vehicle (e.g., 2024 Hatchback):');
+    if (!name) return;
+    
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    
+    if (vehicles.includes(trimmed)) {
+      alert('A vehicle with that name already exists!');
+      return;
+    }
+
+    vehicles.push(trimmed);
+    localStorage.setItem('fuelflow_vehicles', JSON.stringify(vehicles));
+    
+    // Automatically switch to the new vehicle
+    activeVehicle = trimmed;
+    localStorage.setItem('fuelflow_active_vehicle', activeVehicle);
+    
+    renderVehicleOptions();
+    renderHistory();
+    updateStats();
+  });
+
+  // Delete Vehicle handler
+  btnDeleteVehicle.addEventListener('click', () => {
+    if (activeVehicle === 'all') return;
+    
+    if (confirm(`Are you sure you want to delete "${activeVehicle}"? This will also permanently remove all of its logged trip history.`)) {
+      // Filter out trips
+      history = history.filter(item => item.vehicle !== activeVehicle);
+      localStorage.setItem('fuelflow_history', JSON.stringify(history));
+
+      // Remove vehicle
+      vehicles = vehicles.filter(v => v !== activeVehicle);
+      localStorage.setItem('fuelflow_vehicles', JSON.stringify(vehicles));
+
+      // Default back to first vehicle
+      activeVehicle = vehicles[0] || 'all';
+      localStorage.setItem('fuelflow_active_vehicle', activeVehicle);
+
+      renderVehicleOptions();
+      renderHistory();
+      updateStats();
+    }
+  });
+
   calcForm.addEventListener('submit', (e) => {
     e.preventDefault();
     calculate();
@@ -394,9 +502,17 @@ document.addEventListener('DOMContentLoaded', () => {
   btnLogTrip.addEventListener('click', logCurrentTrip);
 
   btnClearHistory.addEventListener('click', () => {
-    if (confirm('Are you sure you want to clear all trip logs? This cannot be undone.')) {
-      history = [];
-      localStorage.removeItem('fuelflow_history');
+    const scopeMsg = activeVehicle === 'all' 
+      ? 'all trip logs across all vehicles' 
+      : `all trip logs for vehicle "${activeVehicle}"`;
+
+    if (confirm(`Are you sure you want to clear ${scopeMsg}? This cannot be undone.`)) {
+      if (activeVehicle === 'all') {
+        history = [];
+      } else {
+        history = history.filter(item => item.vehicle !== activeVehicle);
+      }
+      localStorage.setItem('fuelflow_history', JSON.stringify(history));
       renderHistory();
       updateStats();
     }
@@ -404,6 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialize
   updateSystemLabels();
+  renderVehicleOptions();
   renderHistory();
   updateStats();
 });
